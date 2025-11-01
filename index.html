@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FSGAME Player</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: system-ui, sans-serif;
+    background: #000;
+  }
+
+  body.loading {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* blur the background */
+    filter: blur(5px);
+  }
+
+  #loading-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    z-index: 1000;
+  }
+
+  #loading-text {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #000;
+  }
+
+  /* spinning circle loader */
+  .spinner {
+    border: 8px solid rgba(255, 255, 255, 0.2); /* background of spinner circle */
+    border-top: 8px solid rgba(255, 255, 255, 0.8); /* spinning part */
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  #game-frame {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    border: none;
+    display: none; /* hidden until ready */
+  }
+</style>
+</head>
+<body class="loading">
+
+<div id="loading-container">
+  <div id="loading-text">🎮 Loading game...</div>
+  <div class="spinner"></div>
+</div>
+
+<iframe id="game-frame"></iframe>
+
+<!-- Pako library for decompression -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+
+<script type="module">
+import { FSGAMEPlayer } from '/player.js';
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // Replace with your manifest URL
+  const manifestURL = 'https://cdn.jsdelivr.net/gh/james222323/game@main/slimerancher.json';
+
+  // Fetch manifest first to get background image
+  const manifest = await fetch(manifestURL).then(r => r.json()).catch(e => {
+    console.error("Failed to load manifest", e);
+  });
+
+  if(manifest?.image){
+    document.body.style.backgroundImage = `url(${manifest.image})`;
+  }
+
+  // Override FSGAMEPlayer UI callbacks for spinning loader
+  FSGAMEPlayer.onUpdateLoading = (status) => {
+    const text = document.getElementById("loading-text");
+    text.textContent = status;
+  };
+
+  // Load the game
+  await FSGAMEPlayer.loadFromManifest(manifestURL);
+
+  // Hide loader and show game iframe
+  document.getElementById("loading-container").style.display = "none";
+  document.getElementById("game-frame").style.display = "block";
+  document.body.classList.remove("loading");
+});
+</script>
+
+</body>
+</html>
