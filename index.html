@@ -14,14 +14,6 @@
     background: #000;
   }
 
-  body.loading {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    /* blur the background */
-    filter: blur(5px);
-  }
-
   #loading-container {
     position: fixed;
     top: 50%;
@@ -40,8 +32,8 @@
 
   /* spinning circle loader */
   .spinner {
-    border: 8px solid rgba(255, 255, 255, 0.2); /* background of spinner circle */
-    border-top: 8px solid rgba(255, 255, 255, 0.8); /* spinning part */
+    border: 8px solid rgba(255, 255, 255, 0.2);
+    border-top: 8px solid #ffff;
     border-radius: 50%;
     width: 80px;
     height: 80px;
@@ -63,6 +55,12 @@
     border: none;
     display: none; /* hidden until ready */
   }
+
+  body.loading {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
 </style>
 </head>
 <body class="loading">
@@ -78,7 +76,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 
 <script type="module">
-import { FSGAMEPlayer } from './player.js';
+import { FSGAMEPlayer } from 'https://cdn.jsdelivr.net/gh/james222323/game@main/player.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Replace with your manifest URL
