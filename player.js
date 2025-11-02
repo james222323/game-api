@@ -5,65 +5,90 @@ export class FSGAMEPlayer {
 
   // Load game from a manifest.json URL
   static async loadFromManifest(manifestUrl) {
+    // Safely get elements
     const loadingTextEl = document.getElementById("loading-text");
     const gameFrameEl = document.getElementById("game-frame");
+    const loaderContainer = document.getElementById("loading-container");
 
-    if (!loadingTextEl || !gameFrameEl) {
-      throw new Error("FSGAME Player: Required DOM elements not found.");
+    if (!loadingTextEl || !gameFrameEl || !loaderContainer) {
+      console.error("❌ FSGAME Player: Missing required DOM elements.");
+      return;
     }
 
     // Default callback if none provided
-    if (!this.onUpdateLoading) this.onUpdateLoading = (msg) => {
-      loadingTextEl.textContent = msg;
-    };
+    if (!this.onUpdateLoading) {
+      this.onUpdateLoading = (msg) => {
+        loadingTextEl.textContent = msg;
+      };
+    }
 
     try {
-      // Fetch manifest
+      // Step 1: Fetch manifest
       this.onUpdateLoading("Fetching manifest...");
       const manifest = await fetch(manifestUrl).then(r => r.json());
       if (!manifest.files || !manifest.files.length)
         throw new Error("Manifest missing 'files' array.");
 
-      // Set background image if available
+      // Step 2: Set blurred background image (image only)
       if (manifest.image) {
-        document.body.style.backgroundImage = `url(${manifest.image})`;
-        document.body.style.backgroundSize = "cover";
-        document.body.style.backgroundPosition = "center";
-        document.body.style.backgroundRepeat = "no-repeat";
+        // Create a background layer beneath loader content
+        let bgLayer = document.getElementById("bg-blur-layer");
+        if (!bgLayer) {
+          bgLayer = document.createElement("div");
+          bgLayer.id = "bg-blur-layer";
+          Object.assign(bgLayer.style, {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundImage: `url(${manifest.image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(8px)",
+            zIndex: "0",
+            transform: "scale(1.05)",
+          });
+          document.body.prepend(bgLayer);
+        }
       }
 
-      // Download files
+      // Step 3: Start downloading files
       const buffers = [];
       for (let i = 0; i < manifest.files.length; i++) {
-        const url = manifest.files[i];
         this.onUpdateLoading(`Fetching data... (${i + 1}/${manifest.files.length})`);
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-        const buf = await res.arrayBuffer();
-        buffers.push(buf);
+        const res = await fetch(manifest.files[i]);
+        if (!res.ok) throw new Error(`Failed to fetch ${manifest.files[i]}`);
+        buffers.push(await res.arrayBuffer());
       }
 
-      // Merge buffers
+      // Step 4: Merge buffers
       const mergedBuffer = this.mergeBuffers(buffers);
 
-      // Unpack
+      // Step 5: Unpack
       this.onUpdateLoading("Waiting for game...");
       await this.unpackFSGAME(mergedBuffer);
 
-      // Launch game
+      // Step 6: Launch game
       gameFrameEl.style.display = "block";
-      gameFrameEl.src = "index.html"; // first HTML inside FSGAME archive
+      gameFrameEl.src = "index.html"; // main file inside archive
 
-      // Hide spinner container
-      const loader = document.getElementById("loading-container");
-      if (loader) loader.style.display = "none";
+      // Hide loader (keep blur behind game until load)
+      loaderContainer.style.display = "none";
       document.body.classList.remove("loading");
+
+      // Remove background blur when the game loads
+      gameFrameEl.onload = () => {
+        const bgLayer = document.getElementById("bg-blur-layer");
+        if (bgLayer) bgLayer.remove();
+      };
 
       console.log("🎮 Game loaded successfully!");
 
     } catch (err) {
       console.error("❌ FSGAME Player error:", err);
-      this.onUpdateLoading(`❌ ${err.message}`);
+      if (this.onUpdateLoading)
+        this.onUpdateLoading(`❌ ${err.message}`);
     }
   }
 
