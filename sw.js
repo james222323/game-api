@@ -52,10 +52,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Only intercept requests that start with /game/
-  if (url.origin === location.origin && url.pathname.startsWith('/game/')) {
-    // Extract the file path (remove /game/ prefix)
-    const filePath = url.pathname.replace('/game/', '');
+  // Only intercept requests that start with /player/
+  if (url.origin === location.origin && url.pathname.startsWith('/player/')) {
+    // Extract the file path (remove /player/ prefix)
+    const filePath = url.pathname.replace('/player/', '');
     
     console.log(`📂 Service Worker: Intercepting request for "${filePath}"`);
     
