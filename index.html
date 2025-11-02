@@ -33,7 +33,7 @@
   /* spinning circle loader */
   .spinner {
     border: 8px solid rgba(255, 255, 255, 0.2);
-    border-top: 8px solid #ffff;
+    border-top: 8px solid #fff;
     border-radius: 50%;
     width: 80px;
     height: 80px;
@@ -82,28 +82,47 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Replace with your manifest URL
   const manifestURL = 'https://cdn.jsdelivr.net/gh/james222323/game@main/slimerancher.json';
 
-  // Fetch manifest first to get background image
-  const manifest = await fetch(manifestURL).then(r => r.json()).catch(e => {
-    console.error("Failed to load manifest", e);
-  });
+  const loadingTextEl = document.getElementById("loading-text");
+  const gameFrameEl = document.getElementById("game-frame");
+  const loaderContainer = document.getElementById("loading-container");
 
-  if(manifest?.image){
-    document.body.style.backgroundImage = `url(${manifest.image})`;
+  try {
+    // Step 1: Register Service Worker first
+    loadingTextEl.textContent = "🔧 Initializing player...";
+    const swRegistered = await FSGAMEPlayer.registerServiceWorker();
+    
+    if (!swRegistered) {
+      throw new Error("Service Worker registration failed. Please use HTTPS or localhost.");
+    }
+
+    // Step 2: Fetch manifest to get background image
+    const manifest = await fetch(manifestURL).then(r => r.json()).catch(e => {
+      console.error("Failed to load manifest", e);
+      throw e;
+    });
+
+    if (manifest?.image) {
+      document.body.style.backgroundImage = `url(${manifest.image})`;
+    }
+
+    // Step 3: Override FSGAMEPlayer UI callbacks for spinning loader
+    FSGAMEPlayer.onUpdateLoading = (status) => {
+      loadingTextEl.textContent = status;
+    };
+
+    // Step 4: Load the game
+    await FSGAMEPlayer.loadFromManifest(manifestURL);
+
+    // Step 5: Hide loader and show game iframe
+    loaderContainer.style.display = "none";
+    gameFrameEl.style.display = "block";
+    document.body.classList.remove("loading");
+
+  } catch (err) {
+    console.error("❌ Failed to load game:", err);
+    loadingTextEl.textContent = `❌ Error: ${err.message}`;
+    document.querySelector(".spinner").style.display = "none";
   }
-
-  // Override FSGAMEPlayer UI callbacks for spinning loader
-  FSGAMEPlayer.onUpdateLoading = (status) => {
-    const text = document.getElementById("loading-text");
-    text.textContent = status;
-  };
-
-  // Load the game
-  await FSGAMEPlayer.loadFromManifest(manifestURL);
-
-  // Hide loader and show game iframe
-  document.getElementById("loading-container").style.display = "none";
-  document.getElementById("game-frame").style.display = "block";
-  document.body.classList.remove("loading");
 });
 </script>
 
