@@ -3,6 +3,42 @@ export class FSGAMEPlayer {
   // Callback to update loader text
   static onUpdateLoading = null;
 
+  // Register Service Worker to serve files from IndexedDB
+  static async registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+      console.warn("⚠️ Service Workers not supported in this browser");
+      return false;
+    }
+
+    try {
+      // Unregister any existing service workers first (clean slate)
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+      }
+
+      // Register new service worker
+      const registration = await navigator.serviceWorker.register('./sw.js', {
+        scope: './'
+      });
+
+      console.log('✅ Service Worker registered:', registration.scope);
+
+      // Wait for the service worker to be ready
+      await navigator.serviceWorker.ready;
+      
+      // Wait a bit more to ensure it's active
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log('✅ Service Worker is ready and active');
+      return true;
+
+    } catch (err) {
+      console.error('❌ Service Worker registration failed:', err);
+      return false;
+    }
+  }
+
   // Load game from a manifest.json URL
   static async loadFromManifest(manifestUrl) {
     // Safely get elements
@@ -66,24 +102,27 @@ export class FSGAMEPlayer {
       const mergedBuffer = this.mergeBuffers(buffers);
 
       // Step 5: Unpack
-      this.onUpdateLoading("Waiting for game...");
+      this.onUpdateLoading("Unpacking game files...");
       await this.unpackFSGAME(mergedBuffer);
 
       // Step 6: Launch game
-      gameFrameEl.style.display = "block";
-      gameFrameEl.src = "index.html"; // main file inside archive
-
-      // Hide loader (keep blur behind game until load)
-      loaderContainer.style.display = "none";
-      document.body.classList.remove("loading");
+      this.onUpdateLoading("Starting game...");
+      
+      // Use the /game/ prefix that the service worker intercepts
+      gameFrameEl.src = "/game/index.html";
 
       // Remove background blur when the game loads
       gameFrameEl.onload = () => {
         const bgLayer = document.getElementById("bg-blur-layer");
         if (bgLayer) bgLayer.remove();
+        console.log("🎮 Game loaded successfully!");
       };
 
-      console.log("🎮 Game loaded successfully!");
+      // Handle iframe load errors
+      gameFrameEl.onerror = () => {
+        console.error("❌ Failed to load game in iframe");
+        this.onUpdateLoading("❌ Failed to load game");
+      };
 
     } catch (err) {
       console.error("❌ FSGAME Player error:", err);
@@ -152,6 +191,13 @@ export class FSGAMEPlayer {
       else if (name.endsWith(".png")) type = "image/png";
       else if (name.endsWith(".jpg") || name.endsWith(".jpeg")) type = "image/jpeg";
       else if (name.endsWith(".wasm")) type = "application/wasm";
+      else if (name.endsWith(".svg")) type = "image/svg+xml";
+      else if (name.endsWith(".gif")) type = "image/gif";
+      else if (name.endsWith(".mp3")) type = "audio/mpeg";
+      else if (name.endsWith(".wav")) type = "audio/wav";
+      else if (name.endsWith(".ogg")) type = "audio/ogg";
+      else if (name.endsWith(".webm")) type = "video/webm";
+      else if (name.endsWith(".mp4")) type = "video/mp4";
 
       await saveFile(name, new Blob([inflated], { type }));
 
@@ -159,6 +205,6 @@ export class FSGAMEPlayer {
         this.onUpdateLoading(`Waiting for game... (${i + 1}/${fileCount})`);
     }
 
-    console.log("✅ Unpack complete!");
+    console.log("✅ Unpack complete! Files saved to IndexedDB.");
   }
 }
