@@ -11,16 +11,25 @@ export class FSGAMEPlayer {
     }
 
     try {
+      // Unregister any existing service workers first (clean slate)
       const registrations = await navigator.serviceWorker.getRegistrations();
       for (const registration of registrations) {
         await registration.unregister();
       }
 
-      const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      // Register new service worker
+      const registration = await navigator.serviceWorker.register('./sw.js', {
+        scope: './'
+      });
+
       console.log('✅ Service Worker registered:', registration.scope);
 
+      // Wait for the service worker to be ready
       await navigator.serviceWorker.ready;
+      
+      // Wait a bit more to ensure it's active
       await new Promise(resolve => setTimeout(resolve, 100));
+
       console.log('✅ Service Worker is ready and active');
       return true;
 
@@ -32,6 +41,7 @@ export class FSGAMEPlayer {
 
   // Load game from a manifest.json URL
   static async loadFromManifest(manifestUrl) {
+    // Safely get elements
     const loadingTextEl = document.getElementById("loading-text");
     const gameFrameEl = document.getElementById("game-frame");
     const loaderContainer = document.getElementById("loading-container");
@@ -41,19 +51,23 @@ export class FSGAMEPlayer {
       return;
     }
 
+    // Default callback if none provided
     if (!this.onUpdateLoading) {
-      this.onUpdateLoading = (msg) => loadingTextEl.textContent = msg;
+      this.onUpdateLoading = (msg) => {
+        loadingTextEl.textContent = msg;
+      };
     }
 
     try {
-      // Fetch manifest
+      // Step 1: Fetch manifest
       this.onUpdateLoading("Fetching manifest...");
       const manifest = await fetch(manifestUrl).then(r => r.json());
       if (!manifest.files || !manifest.files.length)
         throw new Error("Manifest missing 'files' array.");
 
-      // Set blurred background image
+      // Step 2: Set blurred background image (image only)
       if (manifest.image) {
+        // Create a background layer beneath loader content
         let bgLayer = document.getElementById("bg-blur-layer");
         if (!bgLayer) {
           bgLayer = document.createElement("div");
@@ -75,25 +89,36 @@ export class FSGAMEPlayer {
         }
       }
 
-      // Sequentially fetch and unpack each part
+      // Step 3: Start downloading files
+      const buffers = [];
       for (let i = 0; i < manifest.files.length; i++) {
-        this.onUpdateLoading(`Fetching part ${i + 1}/${manifest.files.length}...`);
+        this.onUpdateLoading(`Fetching data... (${i + 1}/${manifest.files.length})`);
         const res = await fetch(manifest.files[i]);
         if (!res.ok) throw new Error(`Failed to fetch ${manifest.files[i]}`);
-        const arrayBuffer = await res.arrayBuffer();
-
-        this.onUpdateLoading(`Unpacking part ${i + 1}/${manifest.files.length}...`);
-        await this.unpackFSGAME(arrayBuffer, i + 1, manifest.files.length);
+        buffers.push(await res.arrayBuffer());
       }
 
-      // Launch game
+      // Step 4: Merge buffers
+      const mergedBuffer = this.mergeBuffers(buffers);
+
+      // Step 5: Unpack
+      this.onUpdateLoading("Unpacking game files...");
+      await this.unpackFSGAME(mergedBuffer);
+
+      // Step 6: Launch game
       this.onUpdateLoading("Starting game...");
+      
+      // Use the /player/ prefix that the service worker intercepts
       gameFrameEl.src = "/player/index.html";
+
+      // Remove background blur when the game loads
       gameFrameEl.onload = () => {
         const bgLayer = document.getElementById("bg-blur-layer");
         if (bgLayer) bgLayer.remove();
         console.log("🎮 Game loaded successfully!");
       };
+
+      // Handle iframe load errors
       gameFrameEl.onerror = () => {
         console.error("❌ Failed to load game in iframe");
         this.onUpdateLoading("❌ Failed to load game");
@@ -106,8 +131,20 @@ export class FSGAMEPlayer {
     }
   }
 
-  // Unpack a single FSGAME part
-  static async unpackFSGAME(arrayBuffer, partIndex = 0, totalParts = 1) {
+  // Merge multiple ArrayBuffers into one
+  static mergeBuffers(buffers) {
+    const totalSize = buffers.reduce((sum, b) => sum + b.byteLength, 0);
+    const merged = new Uint8Array(totalSize);
+    let offset = 0;
+    for (const buf of buffers) {
+      merged.set(new Uint8Array(buf), offset);
+      offset += buf.byteLength;
+    }
+    return merged.buffer;
+  }
+
+  // Unpack FSGAME archive and save files to IndexedDB
+  static async unpackFSGAME(arrayBuffer) {
     const DB_NAME = "fsgame_storage";
     const STORE_NAME = "files";
 
@@ -132,7 +169,7 @@ export class FSGAMEPlayer {
     let offset = 0;
     const version = dv.getUint32(offset, true); offset += 4;
     const fileCount = dv.getUint32(offset, true); offset += 4;
-    console.log(`📜 Part ${partIndex}/${totalParts}: Archive version ${version}, files: ${fileCount}`);
+    console.log(`📜 Archive version ${version}, files: ${fileCount}`);
 
     for (let i = 0; i < fileCount; i++) {
       const nameLen = dv.getUint16(offset, true); offset += 2;
@@ -141,12 +178,11 @@ export class FSGAMEPlayer {
 
       const compSize = dv.getUint32(offset, true); offset += 4;
       const origSize = dv.getUint32(offset, true); offset += 4;
-      offset += 4; // skip timestamp
+      offset += 4; // timestamp
 
       const compData = new Uint8Array(arrayBuffer, offset, compSize); offset += compSize;
       const inflated = pako.inflate(compData);
 
-      // Determine MIME type
       let type = "application/octet-stream";
       if (name.endsWith(".html")) type = "text/html";
       else if (name.endsWith(".js")) type = "text/javascript";
@@ -166,9 +202,9 @@ export class FSGAMEPlayer {
       await saveFile(name, new Blob([inflated], { type }));
 
       if (this.onUpdateLoading)
-        this.onUpdateLoading(`Waiting for game... Part ${partIndex}/${totalParts}, file ${i + 1}/${fileCount}`);
+        this.onUpdateLoading(`Waiting for game... (${i + 1}/${fileCount})`);
     }
 
-    console.log(`✅ Part ${partIndex}/${totalParts} unpacked successfully.`);
+    console.log("✅ Unpack complete! Files saved to IndexedDB.");
   }
 }
