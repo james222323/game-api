@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FSGAME Player</title>
+<title>Player</title>
 <style>
   html, body {
     margin: 0;
@@ -30,7 +30,6 @@
     text-shadow: 0 0 10px #000;
   }
 
-  /* spinning circle loader */
   .spinner {
     border: 8px solid rgba(255, 255, 255, 0.2);
     border-top: 8px solid #fff;
@@ -53,7 +52,7 @@
     width: 100vw;
     height: 100vh;
     border: none;
-    display: none; /* hidden until ready */
+    display: none;
   }
 
   body.loading {
@@ -72,48 +71,56 @@
 
 <iframe id="game-frame"></iframe>
 
-<!-- Pako library for decompression -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 
 <script type="module">
 import { FSGAMEPlayer } from './player.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Replace with your manifest URL
-  const manifestURL = 'https://cdn.jsdelivr.net/gh/james222323/game@main/slimerancher.json';
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("id"); // e.g. player.html?id=SR
 
   const loadingTextEl = document.getElementById("loading-text");
   const gameFrameEl = document.getElementById("game-frame");
   const loaderContainer = document.getElementById("loading-container");
 
+  if (!token) {
+    loadingTextEl.textContent = "❌ Missing game ID. Use ?id=SR or ?id=A1B2C3";
+    document.querySelector(".spinner").style.display = "none";
+    return;
+  }
+
   try {
-    // Step 1: Register Service Worker first
+    // Step 1: Load manifest map
+    loadingTextEl.textContent = "📖 Loading game list...";
+    const mapResponse = await fetch('./manifest-map.json');
+    if (!mapResponse.ok) throw new Error("Failed to load manifest map.");
+    const manifestMap = await mapResponse.json();
+
+    // Step 2: Get manifest URL from token
+    const manifestURL = manifestMap[token];
+    if (!manifestURL) throw new Error("Invalid game ID.");
+
+    // Step 3: Register service worker
     loadingTextEl.textContent = "🔧 Initializing player...";
     const swRegistered = await FSGAMEPlayer.registerServiceWorker();
-    
-    if (!swRegistered) {
-      throw new Error("Service Worker registration failed. Please use HTTPS or localhost.");
-    }
+    if (!swRegistered) throw new Error("Service Worker registration failed. Use HTTPS or localhost.");
 
-    // Step 2: Fetch manifest to get background image
-    const manifest = await fetch(manifestURL).then(r => r.json()).catch(e => {
-      console.error("Failed to load manifest", e);
-      throw e;
-    });
-
+    // Step 4: Load manifest background image
+    const manifest = await fetch(manifestURL).then(r => r.json());
     if (manifest?.image) {
       document.body.style.backgroundImage = `url(${manifest.image})`;
     }
 
-    // Step 3: Override FSGAMEPlayer UI callbacks for spinning loader
+    // Step 5: Update loading messages
     FSGAMEPlayer.onUpdateLoading = (status) => {
       loadingTextEl.textContent = status;
     };
 
-    // Step 4: Load the game
+    // Step 6: Load the game
     await FSGAMEPlayer.loadFromManifest(manifestURL);
 
-    // Step 5: Hide loader and show game iframe
+    // Step 7: Show the game
     loaderContainer.style.display = "none";
     gameFrameEl.style.display = "block";
     document.body.classList.remove("loading");
