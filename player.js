@@ -108,7 +108,7 @@ export class FSGAMEPlayer {
       // Step 6: Launch game
       this.onUpdateLoading("Starting game...");
       
-      // Use the /game/ prefix that the service worker intercepts
+      // Use the /player/ prefix that the service worker intercepts
       gameFrameEl.src = "/player/index.html";
 
       // Remove background blur when the game loads
