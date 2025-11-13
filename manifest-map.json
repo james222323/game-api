@@ -3,7 +3,7 @@
   "gd": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/gd.json",
   "pvz2": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/pvz2.json",
   "pvz": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/pvz.json",
-  "bendy": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/bendy.json",
+  "bendy": "https://cdn.jsdelivr.net/gh/james222323/game@master/json/bendy.json",
   "buckshot": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/buckshot.json",
   "hk": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/hk.json"
   
