@@ -6,7 +6,8 @@
   "bendy": "https://cdn.jsdelivr.net/gh/james222323/game@master/json/bendy.json",
   "buckshot": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/buckshot.json",
   "hk": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/hk.json",
-  "tanukisunset": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/tanukisunset.json"
+  "tanukisunset": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/tanukisunset.json",
+  "subway": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/subway.json"
 
 
 }
