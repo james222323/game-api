@@ -8,7 +8,8 @@
   "hk": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/hk.json",
   "tanukisunset": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/tanukisunset.json",
   "subway": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/subway.json",
-  "shooter2": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/shooter2.json"
+  "shooter2": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/shooter2.json",
+  "monkeymart": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/monkeymartjson"
 
 
 }
