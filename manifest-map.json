@@ -20,7 +20,9 @@
   "backrooms": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/backrooms.json",
   "syntaxia": "https://cdn.jsdelivr.net/gh/james222323/game@main/json/syntaxia.json",
   "santy": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/santy.json",
-  "biteatfreddys": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/biteatfreddys.json"
+  "biteatfreddys": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/biteatfreddys.json",
+  "FNAC": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAC.json",
+  "FNAC2": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAC2.json"
 
 
 }
