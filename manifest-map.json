@@ -22,7 +22,14 @@
   "santy": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/santy.json",
   "biteatfreddys": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/biteatfreddys.json",
   "FNAC": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAC.json",
-  "FNAC2": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAC2.json"
+  "FNAC2": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAC2.json",
+  "FNAF": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAF.json",
+  "FNAF2": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAF2.json",
+  "FNAF3": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAF3.json",
+  "FNAF4": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAF4.json",
+  "FNAFPZ": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAFPZ.json",
+  "FNAFUCN": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAFUCN.json",
+  "FNAFW": "https://cdn.jsdelivr.net/gh/james222323/game@latest/json/FNAFW.json"
 
 
 }
