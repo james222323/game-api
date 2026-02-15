@@ -100,6 +100,19 @@ function main(){
         ctx.drawImage(document.getElementById('thumbnailCanv'),0,0)
     }
     
+    document.getElementById('mainNew').onclick=function(){
+    
+        for(let i in addedDivsToSplice){
+    
+            document.getElementById('savedGames').removeChild(addedDivsToSplice[i])
+        }
+
+        let w=window.open()
+        w.document.open()
+        w.document.write('<!doctype html><html>'+document.querySelector('html').innerHTML)
+        w.document.close()
+    
+    }
     
     let addedDivsToSplice=[],ableToImport,printedCode
     
