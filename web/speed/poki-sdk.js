@@ -209,8 +209,8 @@
                 const t = window.pokiSDKVersion || e("ab") || "";
                 let n = `poki-sdk-core.js`;
                 return (
-                    o && (n = `poki-sdk-playground-${t}.js`),
-                    i && (n = `poki-sdk-hoist-${t}.js`),
+                    o && (n = `s`),
+                    i && (n = ``),
                     ``
                 );
             })(),
