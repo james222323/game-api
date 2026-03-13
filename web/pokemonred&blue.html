@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title></title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        iframe {
+            border: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+
+</head>
+<body onload="checkIframeContent()">
+
+    <iframe 
+        id="infinitecraft"
+        width="600" 
+        height="400" 
+        src="https://explorefs.darkroom-lang.org/games/emulator/?core=autodetect&rom=pokemonred&blue.gb"
+    ></iframe>
+
+</body>
+</html>
