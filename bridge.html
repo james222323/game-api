@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<!--
+  FUSION Cloud Save Bridge
+  ========================
+  Place this file at the ROOT of each GitHub Pages game domain:
+    domain1.com/bridge.html
+    domain2.com/bridge.html
+
+  This file is the ONLY addition needed to game domains.
+  It acts as a postMessage relay — the main FUSION site sends
+  commands, this file reads/writes localStorage on this domain,
+  and sends the data back.
+
+  IMPORTANT: Set ALLOWED_ORIGIN below to your exact PythonAnywhere URL.
+-->
+<script>
+  const ALLOWED_ORIGIN = 'https://james123321.pythonanywhere.com/'; // ← CHANGE THIS
+
+  // Track whether this is a Safari/ITP environment where
+  // third-party iframe storage may be sandboxed/empty.
+  function detectITP() {
+    const testKey = '__fusion_itp_test__';
+    try {
+      localStorage.setItem(testKey, '1');
+      const ok = localStorage.getItem(testKey) === '1';
+      localStorage.removeItem(testKey);
+      return !ok; // if we can't write, ITP is active
+    } catch (e) {
+      return true; // storage blocked entirely
+    }
+  }
+
+  window.addEventListener('message', function(event) {
+    // Strict origin check — ignore anything not from FUSION
+    if (event.origin !== ALLOWED_ORIGIN) return;
+
+    const { type, data, requestId } = event.data || {};
+
+    // Helper to reply back to the parent
+    function reply(payload) {
+      event.source.postMessage(
+        Object.assign({ requestId }, payload),
+        ALLOWED_ORIGIN
+      );
+    }
+
+    switch (type) {
+
+      // ── Read all localStorage on this domain ──────────────────────────────
+      case 'GET_ALL': {
+        const itpActive = detectITP();
+        if (itpActive) {
+          reply({ type: 'ITP_BLOCKED' });
+          break;
+        }
+        const all = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          // Skip any FUSION-internal keys to avoid circular saves
+          if (k && !k.startsWith('__fusion')) {
+            all[k] = localStorage.getItem(k);
+          }
+        }
+        reply({ type: 'STORAGE_DATA', data: all });
+        break;
+      }
+
+      // ── Write a full snapshot back to localStorage ─────────────────────────
+      case 'SET_ALL': {
+        const itpActive = detectITP();
+        if (itpActive) {
+          reply({ type: 'ITP_BLOCKED' });
+          break;
+        }
+        try {
+          if (data && typeof data === 'object') {
+            Object.entries(data).forEach(function([k, v]) {
+              if (k && !k.startsWith('__fusion')) {
+                localStorage.setItem(k, v);
+              }
+            });
+          }
+          reply({ type: 'SET_DONE' });
+        } catch(e) {
+          reply({ type: 'SET_ERROR', error: e.message });
+        }
+        break;
+      }
+
+      // ── Verify ITP status (called after SET_ALL to confirm write worked) ───
+      case 'CHECK_ITP': {
+        reply({ type: 'ITP_STATUS', blocked: detectITP() });
+        break;
+      }
+
+      // ── Ping (readiness check) ────────────────────────────────────────────
+      case 'PING': {
+        reply({ type: 'PONG' });
+        break;
+      }
+    }
+  });
+
+  // Signal to the parent that this bridge is loaded and ready
+  // (parent may be waiting for this before sending commands)
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'BRIDGE_READY' }, ALLOWED_ORIGIN);
+  }
+</script>
+</html>
